@@ -8,7 +8,7 @@
 # lxc: linux Container library
 
 # Authors:
-# Alexander Khryukin <alexander@mezon.ru>
+# Alexey Shabalin <shaba@openmandriva.org>
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,9 +25,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #Configurations
+distro=cooker
 arch=$(uname -m)
 cache_base=/var/cache/lxc/openmandriva/$arch
-default_path=@LXCPATH@
+#default_path=@LXCPATH@
+#default_path=/var/lib/lxc/
 default_profile=default
 root_password=root
 lxc_network_type=veth
@@ -110,12 +112,12 @@ create_chroot_openmandriva()
         echo "Failed to create '$INSTALL_ROOT' directory"
         return 1
     fi
-    RELEASE="cooker"
     # package list to install
     PKG_LIST="basesystem-minimal locales locales-en initscripts urpmi cronie dhcp-client"
     # download a mini openmandriva into a cache
     echo "Downloading openmandriva minimal ..."
-    URPMI="/usr/sbin/urpmi.addmedia --urpmi-root $INSTALL_ROOT main http://abf.rosalinux.ru/downloads/$RELEASE/repository/$arch/main/release"
+    URPMI="/usr/sbin/urpmi.addmedia --urpmi-root $INSTALL_ROOT main http://abf.rosalinux.ru/downloads/$distro/repository/$arch/main/release"
+    echo $URPMI
     URPMI_BASE="/usr/sbin/urpmi --no-suggests --no-verify-rpm --ignorearch --root $INSTALL_ROOT --urpmi-root $INSTALL_ROOT --auto $PKG_LIST"
     $URPMI
     $URPMI_BASE
@@ -361,8 +363,10 @@ if [ -z "$profile" ]; then
 fi
 
 if [ -z "$release" ]; then
-    if [ "$is_openmandriva" ]; then
-        release=$(cat /etc/mandriva-release |awk '/^/ {print $4}')
+    if [ "$distro" == "cooker" ]; then
+	release="$distro"
+    elif [ "$is_openmandriva" ]; then
+	release=$(rpm --eval %product_version)
     else
 	echo "This is not an OpenMandriva or ROSA release"
         exit 1
